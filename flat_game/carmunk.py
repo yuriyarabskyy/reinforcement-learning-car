@@ -7,7 +7,7 @@ from pygame.color import THECOLORS
 
 import pymunk
 from pymunk.vec2d import Vec2d
-from pymunk.pygame_util import draw
+import pymunk.pygame_util
 
 # PyGame init
 width = 1000
@@ -15,6 +15,8 @@ height = 700
 pygame.init()
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
+space = pymunk.Space()
+draw_options = pymunk.pygame_util.DrawOptions(screen)
 
 # Turn off alpha since we don't use it.
 screen.set_alpha(None)
@@ -30,7 +32,7 @@ class GameState:
         self.crashed = False
 
         # Physics stuff.
-        self.space = pymunk.Space()
+        self.space = space
         self.space.gravity = pymunk.Vec2d(0., 0.)
 
         # Create the car.
@@ -72,7 +74,7 @@ class GameState:
         self.create_cat()
 
     def create_obstacle(self, x, y, r):
-        c_body = pymunk.Body(pymunk.inf, pymunk.inf)
+        c_body = pymunk.Body(body_type = pymunk.Body.STATIC)
         c_shape = pymunk.Circle(c_body, r)
         c_shape.elasticity = 1.0
         c_body.position = x, y
@@ -100,7 +102,7 @@ class GameState:
         self.car_shape.elasticity = 1.0
         self.car_body.angle = r
         driving_direction = Vec2d(1, 0).rotated(self.car_body.angle)
-        self.car_body.apply_impulse(driving_direction)
+        self.car_body.apply_impulse_at_local_point(driving_direction)
         self.space.add(self.car_body, self.car_shape)
 
     def frame_step(self, action):
@@ -122,7 +124,7 @@ class GameState:
 
         # Update the screen and stuff.
         screen.fill(THECOLORS["black"])
-        draw(screen, self.space)
+        space.debug_draw(draw_options)
         self.space.step(1./10)
         if draw_screen:
             pygame.display.flip()
@@ -176,7 +178,7 @@ class GameState:
             for i in range(10):
                 self.car_body.angle += .2  # Turn a little.
                 screen.fill(THECOLORS["red"])  # Red is scary!
-                draw(screen, self.space)
+                space.debug_draw(draw_options)
                 self.space.step(1./10)
                 if draw_screen:
                     pygame.display.flip()
